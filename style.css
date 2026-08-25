@@ -848,3 +848,31 @@ button:hover {
   text-align: center;
   vertical-align: middle;
 }
+
+.tipo-normal {
+  color: green;
+  font-weight: bold;
+}
+
+.tipo-emergencial {
+  color: red;
+  font-weight: bold;
+}
+
+.btn-whatsapp {
+  background: #44a668;
+  color: white;
+}
+
+.btn-whatsapp:hover {
+  background: #35784f;
+}
+
+.btn-nota {
+  background: #4065b4;
+  color: white;
+}
+
+.btn-nota:hover {
+  background: #21396c;
+}
