@@ -162,6 +162,9 @@ function esconderTudo() {
 
   const minhasSolicitacoes =document.getElementById("minhasSolicitacoesView" );
   if (minhasSolicitacoes)minhasSolicitacoes.classList.add("hidden");
+
+  const estoque = document.getElementById( "estoqueView"); 
+  if (estoque) estoque.classList.add("hidden");
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -494,7 +497,8 @@ const menuPorPerfil = {
     { nome: "Maletas", acao: "abrirMaletas" },
     { nome: "Estatísticas", acao: "abrirEstatisticas" },
     {nome: "Documentação", acao: "abrirDocumentacao"}, 
-    {nome: "Aprovar Compras", acao: "abrirAprovarCompras"}
+    {nome: "Aprovar Compras", acao: "abrirAprovarCompras"},
+    {nome: "Estoque", acao: "abrirEstoque"},
   ],
 
   tecnico: [
@@ -1375,8 +1379,106 @@ window.abrirDetalhesTecnico = function (
   const link = document.getElementById("linkTeams");
   if (link) link.href = teams;
 };
+window.abrirDetalhesEmergencia = async (id) => {
 
+  const snap =
+    await getDoc(
+      doc(db, "compras", id)
+    );
 
+  if (!snap.exists()) {
+    return;
+  }
+
+  const data = snap.data();
+
+  const modal =
+    document.createElement("div");
+
+  modal.className = "modal";
+
+  modal.innerHTML = `
+    <div
+  class="modal-content"
+  style="
+    position:relative;
+    max-height:80vh;
+    overflow-y:auto;">
+
+      <span
+        onclick="this.closest('.modal').remove()"
+        style="
+          position:absolute;
+          top:10px;
+          right:15px;
+          cursor:pointer;
+          color:#952020;
+          font-size:15px
+          font-weight:bold;
+        "
+      >
+        ✖
+      </span>
+
+      <h3>
+        Detalhes da Ocorrência
+      </h3>
+        <h4>
+        Dados da Ocorrência
+        </h4>
+      <p>
+        <strong>Ferramenta:</strong><br>
+        ${data.ferramenta || "-"}
+      </p>
+
+      <p>
+        <strong>Motivo:</strong><br>
+        ${data.motivo || "-"}
+      </p>
+
+      <p>
+        <strong>Situação emergencial:</strong><br>
+        ${data.situacaoEmergencial || "-"}
+      </p>
+      <hr>
+        <h4>
+         Dados da Aprovação
+      </h4>
+      <p>
+        <strong>Revenda:</strong><br>
+        ${data.revenda || "-"}
+      </p>
+
+      <p>
+        <strong>Data da autorização:</strong><br>
+        ${data.dataEmergencia || "-"}
+      </p>
+
+      <p>
+        <strong>Observação do gestor:</strong><br>
+        ${data.obsGestor || "-"}
+      </p>
+
+      <hr>
+      <h4>
+         Anexos
+      </h4>
+      <button
+        class="btn-whatsapp"
+        onclick="window.open('${data.urlWhatsapp}','_blank')">
+        Ver Print do WhatsApp </button>
+
+        <button
+          class="btn-nota"
+          onclick="window.open('${data.urlNota}','_blank')">
+          Ver Nota Fiscal
+        </button>
+  
+  `;
+
+  document.body.appendChild(modal);
+
+};
 window.fecharModalTecnico = function () {
 
   const modal = document.getElementById("modalTecnico");
@@ -1482,13 +1584,41 @@ window.abrirCompras = () => {
     <input id="compMotivo" placeholder="Motivo (quebrou, perdeu...)" />
 
     <button onclick="enviarCompra()">Solicitar</button>
-  `;
+
+    <select
+  id="compTipo"
+  onchange="toggleEmergencia()">
+      <option value="normal">
+        Compra Normal
+      </option>
+
+      <option value="emergencial">
+        Compra Emergencial
+      </option>
+    </select>
+
+  <div id="blocoEmergencia" class="hidden">
+
+  <p>
+    🚨 Descreva a situação emergencial
+  </p>
+
+  <textarea
+    id="compEmergencia"
+    rows="4"
+    placeholder="Ex.: Ferramenta quebrou durante atendimento em cliente e a compra foi autorizada pelo gestor."
+  ></textarea>
+
+</div>
+      `;
 };
 
 window.enviarCompra = async () => {
 
   const ferramenta = document.getElementById("compFerramenta").value;
   const motivo = document.getElementById("compMotivo").value;
+  const tipo =document.getElementById("compTipo").value;
+  const situacaoEmergencial =document.getElementById("compEmergencia")?.value || "";
     if (!motivo.trim()) {
 
         alert(
@@ -1507,12 +1637,17 @@ await setDoc(
     tecnicoUid: window.usuarioLogadoUID,
     tecnicoNome: userData.nome,
     gestorUid: userData.gestorUid,
+
     ferramenta,
     motivo,
+    tipo,
+    situacaoEmergencial,
+
     status: "pendente",
-    tipo: "manual", // ✅ AQUI
+
     prazo: null,
     localRetirada: null,
+
     criadoEm: new Date()
   }
 );
@@ -1527,7 +1662,6 @@ await fetch("https://hook.us2.make.com/lefcscbgeaz9wow6rk5ugq0oe3oudxat", {
     motivo: motivo
   })
 });
-
   alert("✅ Solicitação enviada!");
 };
 window.abrirAprovarCompras = async () => {
@@ -1554,14 +1688,15 @@ window.abrirAprovarCompras = async () => {
 
   const table = document.createElement("table");
 
-  table.innerHTML = `
-    <thead>
-      <th>Técnico</th>
-      <th>Ferramenta</th>
-      <th>Motivo</th>
-      <th>Status</th>
-      <th>Ações</th>
-    </thead>
+table.innerHTML = `
+  <thead>
+    <th>Técnico</th>
+    <th>Ferramenta</th>
+    <th>Motivo</th>
+    <th>Status</th>
+    <th>Ações</th>
+    <th>Tipo</th>
+  </thead>
     <tbody id="tbodyCompras"></tbody>
   `;
 
@@ -1602,7 +1737,24 @@ tr.innerHTML = `
 
   <td>${data.ferramenta}</td>
 
-  <td>${data.motivo}</td>
+<td>
+
+  ${data.motivo}
+
+  ${
+    data.tipo === "emergencial"
+      ? `
+        <br><br>
+
+        <button
+          onclick="abrirDetalhesEmergencia('${docSnap.id}')"
+        >
+          📄 Ver detalhes
+        </button>
+      `
+      : ""
+  }
+</td>
 
   <td style="text-align:center;">
 
@@ -1610,29 +1762,28 @@ tr.innerHTML = `
       ${statusTexto[data.status] || data.status}
     </strong>
 
-    ${
-      data.status === "aprovado"
-        ? `
-        <br><br>
 
-        <strong>Prazo:</strong>
-        ${
-          data.prazo
-            ? new Date(data.prazo)
-                .toLocaleDateString("pt-BR")
-            : "-"
-        }
+      ${
+        data.status === "aprovado" &&
+        data.tipo !== "emergencial"
+          ? `
+            <strong>Prazo:</strong>
+            ${
+              data.prazo
+                ? new Date(data.prazo)
+                    .toLocaleDateString("pt-BR")
+                : "-"
+            }
 
-        <br><br>
+            <br><br>
 
-        <strong>Local:</strong>
+            <strong>Local:</strong>
+            <br>
 
-        <br>
-
-        ${data.localRetirada || "-"}
-        `
-        : ""
-    }
+            ${data.localRetirada || "-"}
+          `
+          : ""
+      }
 
     ${
       data.status === "em espera" &&
@@ -1691,9 +1842,14 @@ tr.innerHTML = `
       </button>
     ` : ""}
 
-  </td>
+      <td>
+        ${
+      data.tipo === "emergencial"
+      ? "🚨 Emergencial"
+      : "✅ Normal"
+         }
+        </td>
 `;
-
     tbody.appendChild(tr);
   });
 };
@@ -1869,6 +2025,28 @@ window.toggleGestor = () => {
   }
 };
 
+window.toggleEmergencia = () => {
+
+  const tipo =
+    document.getElementById(
+      "compTipo"
+    )?.value;
+
+ const campo =
+  document.getElementById(
+    "blocoEmergencia"
+  );
+
+  if (!campo) return;
+
+  if (tipo === "emergencial") {
+    campo.classList.remove("hidden");
+  } else {
+    campo.classList.add("hidden");
+  }
+
+};
+
 window.colocarEmEspera = async (id) => {
 
   const comentario =
@@ -1896,24 +2074,118 @@ window.colocarEmEspera = async (id) => {
   abrirAprovarCompras();
 };
 
-window.abrirAprovacaoComPrazo = (id) => {
-
+window.abrirAprovacaoComPrazo = async (id) => {
+  
   const modal = document.createElement("div");
   modal.id = "modalAprovacao";
   modal.className = "modal";
 
+  const compra =
+  await getDoc(
+    doc(db, "compras", id), 
+  );
+const dados = compra.data();
   modal.innerHTML = `
-    <div class="modal-content">
-      <h3>Aprovar compra</h3>
+      <div class="modal-content" style="position:relative;">
 
+        <span
+          onclick="document.getElementById('modalAprovacao')?.remove()"
+          style="
+            position:absolute;
+            top:10px;
+            right:15px;
+            cursor:pointer;
+            color:red;
+            font-size:20px;
+            font-weight:bold;
+          ">
+          ×
+        </span>
+        <h3>Aprovar compra</h3>
+${
+  dados.tipo === "emergencial"
+    ? `
+
+      <label>
+        Data da autorização:
+      </label>
+
+      <input
+        type="date"
+        id="dataEmergencia_${id}"
+      />
+
+      <label>
+        Revenda onde ocorreu o atendimento:
+      </label>
+
+      <input
+        type="text"
+        id="revenda_${id}"
+        placeholder="Nome da revenda"
+      />
+
+      <label>
+        Observação do gestor:
+      </label>
+
+      <textarea
+        id="obsGestor_${id}"
+        rows="4"
+        style="
+          width:100%;
+          box-sizing:border-box;
+          resize:vertical;
+          margin-bottom:10px;
+        "
+        placeholder="Descreva por que a compra emergencial foi autorizada."
+      ></textarea>
+    `
+    : `
       <label>Prazo:</label>
-      <input type="date" id="prazo_${id}" />
+
+      <input
+        type="date"
+        id="prazo_${id}"
+      />
 
       <label>Local de retirada:</label>
+
       <select id="local_${id}">
-        ${locaisRetirada.map(l => `<option>${l}</option>`).join("")}
+        ${locaisRetirada.map(l =>
+          `<option>${l}</option>`
+        ).join("")}
       </select>
 
+    `
+}
+      ${
+          dados.tipo === "emergencial"
+            ? `
+              <label>
+                Print da conversa WhatsApp:
+              </label>
+
+              <input
+                type="file"
+                id="printWhatsapp"
+                accept="image/*"
+              />
+
+              <br><br>
+
+              <label>
+                Nota fiscal:
+              </label>
+
+              <input
+                type="file"
+                id="notaFiscal"
+                accept=".pdf,image/*"
+              />
+            `
+            : ""
+        }
       <button onclick="confirmarAprovacaoComPrazo('${id}')">✅ Confirmar</button>
     </div>
   `;
@@ -1922,23 +2194,67 @@ window.abrirAprovacaoComPrazo = (id) => {
 };
 window.confirmarAprovacaoComPrazo = async (id) => {
 
-  const prazo = document.getElementById(`prazo_${id}`).value;
-  const local = document.getElementById(`local_${id}`).value;
+  const prazo = document.getElementById(`prazo_${id}`)?.value || "";
+  const local = document.getElementById(`local_${id}`)?.value || "";
+  const printWhatsapp = document.getElementById("printWhatsapp")?.files[0];
+  const notaFiscal = document.getElementById("notaFiscal")?.files[0];
+  const dataEmergencia =document.getElementById(`dataEmergencia_${id}`)?.value || "";
+  const revenda =document.getElementById(`revenda_${id}`)?.value || "";
+  const obsGestor = document.getElementById(`obsGestor_${id}`)?.value || "";
 
-  if (!prazo) {
-    alert("Defina um prazo!");
-    return;
-  }
+  console.log("Print:", printWhatsapp);
+  console.log("Nota:", notaFiscal);
+  if (!prazo && !dataEmergencia
+) {
+  alert(
+    "Preencha a data."
+  );
+  return;
+}
+let urlWhatsapp = "";
+let urlNota = "";
+if (printWhatsapp) {
 
- await setDoc(
+  const urls =
+    await uploadFotosChecklist(
+      window.usuarioLogadoUID,
+      "whatsapp",
+      [printWhatsapp]
+    );
+
+  urlWhatsapp = urls[0] || "";
+}
+
+if (notaFiscal) {
+
+  const urls =
+    await uploadFotosChecklist(
+      window.usuarioLogadoUID,
+      "nota",
+      [notaFiscal]
+    );
+
+  urlNota = urls[0] || "";
+}
+  await setDoc(
   doc(db, "compras", id),
   {
     status: "aprovado",
+
+    dataEmergencia,
+    revenda,
+    obsGestor,
+
+    urlWhatsapp,
+    urlNota,
+
     prazo,
     localRetirada: local
+
   },
   { merge: true }
 );
+
 
   const snap = await getDoc(doc(db, "compras", id));
   const data = snap.data();
@@ -3140,3 +3456,210 @@ window.abrirMinhasSolicitacoes =
     });
 
   };
+  
+  window.abrirEstoque = () => {
+
+  esconderTudo();
+
+  const view =
+    document.getElementById(
+      "estoqueView"
+    );
+
+  if (!view) return;
+
+  view.classList.remove("hidden");
+
+  view.innerHTML = `
+<h2>
+  📦 Estoque de Ferramentas
+</h2>
+
+<label>
+  Unidade:
+</label>
+
+<select id="estoqueUnidade">
+
+  <option>
+    São José dos Pinhais
+  </option>
+
+  <option>
+    Passo Fundo
+  </option>
+
+  <option>
+    Palmas
+  </option>
+
+  <option>
+    Cuiabá
+  </option>
+
+</select>
+
+<br><br>
+
+<button onclick="abrirCadastroEstoque()">
+  ➕ Atualizar Estoque
+</button>
+
+<div id="listaEstoque">
+</div>
+`;
+};
+
+  window.abrirCadastroEstoque = () => {
+  let html = `
+  <div class="modal" id="modalEstoque">
+    <div
+      class="modal-content"
+      style="
+        max-height:80vh;
+        overflow-y:auto;
+        width:700px;
+        max-width:90%;
+      "
+    >
+    <span
+  onclick="document.getElementById('modalEstoque')?.remove()"
+  style="
+    position:absolute;
+    top:10px;
+    right:15px;
+    cursor:pointer;
+    color:#952020;
+    font-size:15px
+    font-weight:bold;
+  "
+>
+  ✖
+</span>
+      <h3>Atualizar Estoque</h3>
+      `; 
+  Object.entries(ferramentas).forEach(([grupo, lista]) => {
+    html +=` 
+    <details> 
+
+    <summary>${grupo}</summary>
+    `; 
+    lista.forEach(f=> { 
+      html += `
+     <div
+  style="
+    margin-bottom:15px;
+    padding:8px;
+    border-bottom:1px solid #ddd;
+  "
+>
+
+  <strong>${f}</strong>
+
+  <br>
+
+      <input
+        type="number"
+        min="0"
+        value="0"
+        data-ferramenta="${f}"
+      />
+      </div>
+      `;
+    }); 
+
+    html +=` </details>
+    `;
+  }
+); 
+  html += `
+      <button onclick="salvarEstoque()">
+        Salvar Estoque
+      </button>
+    </div>
+  </div>
+  `;
+  document.body.insertAdjacentHTML("beforeend", html);
+}
+
+window.salvarEstoque = () => {
+
+  const inputs =
+    document.querySelectorAll(
+      "#modalEstoque input[data-ferramenta]"
+    );
+
+  const estoque = {};
+
+  inputs.forEach(input => {
+
+    const ferramenta =
+      input.dataset.ferramenta;
+
+    const quantidade =
+      Number(input.value);
+
+    if (quantidade > 0) {
+
+      estoque[ferramenta] =
+        quantidade;
+
+    }
+
+  });
+
+  console.log(estoque);
+
+};
+
+window.importarEstoque = () => {
+
+  const input =
+    document.createElement("input");
+
+  input.type = "file";
+
+  input.accept = ".xlsx,.xls";
+
+  input.onchange = (e) => {
+
+    const file =
+      e.target.files[0];
+
+    if (!file) return;
+
+    const reader =
+      new FileReader();
+
+    reader.onload = (evento) => {
+
+      const data =
+        new Uint8Array(
+          evento.target.result
+        );
+
+      const workbook =
+        XLSX.read(data, {
+          type: "array"
+        });
+
+      const primeiraAba =
+        workbook.SheetNames[0];
+
+      const sheet =
+        workbook.Sheets[primeiraAba];
+
+      const json =
+        XLSX.utils.sheet_to_json(sheet);
+
+      console.log(json);
+
+    };
+
+    reader.readAsArrayBuffer(file);
+
+  };
+
+  input.click();
+
+};
