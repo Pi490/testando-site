@@ -7,13 +7,16 @@
   <title>Operant</title>
 
   <link rel="stylesheet" href="./style.css" />
+  <link rel="stylesheet"href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined"/>
+  <link rel="stylesheet"href="https://cdn-uicons.flaticon.com/uicons-regular-rounded/css/uicons-regular-rounded.css"/>
+  <link rel="stylesheet"href="https://cdn-uicons.flaticon.com/uicons-bold-rounded/css/uicons-bold-rounded.css"/>
 </head>
 
 <body>
 
 <header id="mainHeader">
 
-  <div class="header-inner">
+  <div class="topbar">
 
    <div
   class="logo-area"
@@ -27,132 +30,60 @@
 
      <div class="header-title">Operant</div>
     </div>
-    <link rel="icon" href="./img/favicon.png" type>
+  <div class="topbar-right">
 
-    <div class="header-right">
+  <button
+  id="btnMenu"
+  class="menu-btn"
+>
 
-      <span
-        id="loginLink"
-        onclick="window.abrirLogin()"
-        class="login-link"
-      >
-        Login/Cadastrar
-      </span>
+  <span
+    class="material-symbols-outlined"
+  >
+    menu
+  </span>
 
-      <div class="perfil-wrapper">
+</button>
 
-        <span
-          id="headerPerfil"
-          class="header-perfil hidden"
-        >
-          perfil ▾
-        </span>
+  <div class="notificacao-wrapper">
 
-        <div
-          id="perfilMenu"
-          class="perfil-menu hidden"
-        >
-
-          <button onclick="abrirConfiguracoes()">
-            Configurações
-          </button>
-
-          <button onclick="logout()">
-            Sair
-          </button>
-
-        </div>
-
-      </div>
-
-      <div class="menu-wrapper">
-
-        <button
-          id="menuToggle"
-          class="menu-btn"
-        >
-          ⋮
-        </button>
-
-        <div
-          id="menuDropdown"
-          class="menu-dropdown hidden"
-        ></div>
-
-      </div>
-
-    </div>
-
+    <span
+      class="material-symbols-outlined sino"
+    >
+      notifications
+    </span>
   </div>
+  <div class="perfil-wrapper">
+    <span
+      id="headerPerfil"
+      class="header-perfil hidden"
+    >
+      Usuário
+    </span>
+<div id="perfilMenu"class="perfil-menu hidden">
+<button onclick="abrirConfiguracoes()">Configurações</button>
+<button onclick="logout()">Sair</button>
+</div>
+</div>
 
+<!-- Login -->
+<span id="loginLink" onclick="window.abrirLogin()"class="login-link">
+Login/Cadastrar
+</span>
+</div>
 </header>
+<aside
+  id="sidebar"
+  class="sidebar"
+>
 
-<div id="app">
-   <div id="maletasView" class="card hidden">
+  <h3>Módulos</h3>
 
-  <h2>Maletas</h2>
+  <ul id="sidebarMenu"></ul>
 
-  <div id="listaTecnicosMaletas"></div>
+</aside>
 
-  <div id="listaMesesMaletas"></div>
 
-  <div id="fotosMaleta"></div>
-
-</div>
-
-<div id="documentacaoView" class="hidden">
-
-  <div class="card">
-
-    <h2>Documentação Técnica</h2>
-<div id="formDocumento">
-
-  <select id="docTecnico">
-    <option value="">
-      Selecione um técnico
-    </option>
-  </select>
-
-  <input
-    id="docTitulo"
-    placeholder="Título do documento"
-  >
-
-  <input
-    id="docDescricao"
-    placeholder="Descrição"
-  >
-
-  <input
-    type="file"
-    id="docArquivo"
-    accept=".pdf"
-  >
-
-  <label>
-  <input
-    type="checkbox"
-    id="docAssinatura"
-  />
-  Requer assinatura do técnico
-</label>
-
-  <button onclick="adicionarDocumento()">
-    Adicionar Documento
-  </button>
-
-</div>
-
-    </div>
-
-    <hr>
-
-    <div id="listaDocumentos"></div>
-
-  </div>
-
-</div>
-</div>
   <!-- HOME -->
   <div id="homeView" class="card">
 
@@ -261,18 +192,38 @@
         >
 
       <select id="regRole" onchange="toggleGestor()">
-
   <option value="tecnico">Técnico</option>
   <option value="admin">Administrador</option>
-
 </select>
 
 <select id="regGestor">
-
   <option value="">Selecione o gestor</option>
-
 </select>
+        <div id="blocoUnidade">
+            <select id="regUnidade">
 
+              <option value="">
+                Selecione a unidade
+              </option>
+
+              <option value="São José dos Pinhais">
+                São José dos Pinhais
+              </option>
+
+              <option value="Passo Fundo">
+                Passo Fundo
+              </option>
+
+              <option value="Palmas">
+                Palmas
+              </option>
+
+              <option value="Cuiabá">
+                Cuiabá
+              </option>
+
+            </select>
+            </div>
         <small
           id="erroSenha"
           style="color:rgb(212, 0, 0); display:none;"
@@ -298,6 +249,7 @@
   </div>
 
   <!-- TÉCNICO -->
+   <div id="app">
  <div id="regrasTecnicoView" class="card hidden">
 
    <h2>Diretrizes para Técnicos de Campo</h2>
@@ -416,61 +368,7 @@
     </div>
 
   </div>
-
-  <!-- ADMIN -->
- <div id="adminView" class="card hidden">
-
-  <h2>Administração</h2>
-
-  <p>
-  🟢 Regularizados
-  <span id="countOk">0</span>
-
-  🟡 Problemas
-  <span id="countProblemas">0</span>
-
-  🔴 Pendentes
-  <span id="countPendente">0</span>
-  </p>
-
-  <table id="tabelaTecnicos" border="1" width="100%">
-    <thead>
-      <th>Técnico</th>
-      <th>Status</th>
-    </thead>
-    <tbody></tbody>
-  </table>
-
-  <button id="btnExportarExcel">
-    Exportar Excel
-  </button>
-
-</div>
-  <div id="regrasView" class="card hidden">
-
- <h2>Diretrizes do Sistema</h2>
-
-  <ul>
-    <li>Os administradores são responsáveis pelo acompanhamento contínuo do envio dos checklists pelos técnicos de campo, 
-      conforme cronograma estabelecido.</li>
-    <li>Compete aos administradores a verificação, análise e tratativa das ocorrências, 
-      irregularidades ou não conformidades registradas no sistema.</li>
-    <li>É de responsabilidade dos administradores assegurar o correto fechamento mensal das maletas, após validação dos registros realizados.</li>
-    <li>Cabe aos administradores o monitoramento contínuo das pendências e do status operacional dos técnicos no sistema.</li>
-    <li>Os administradores devem garantir a integridade, a segurança e a confidencialidade dos dados registrados no sistema, 
-      adotando as medidas necessárias para proteção das informações.</li>
-  </ul>
-</div>
-</div>
-<div id="comprasView" class="card hidden"></div>
-<div id="estoqueView" class="card hidden"></div>
-<div id="minhasSolicitacoesView"class="hidden">
-  <h2>Minhas Solicitações</h2>
-  <div id="listaMinhasSolicitacoes"></div>
-</div>
-
-<!-- MODAL TÉCNICO -->
-<div
+  <div
   id="modalTecnico"
   class="modal hidden"
 >
@@ -516,6 +414,125 @@
     </div>
   </div>
 </div>
+
+  <!-- ADMIN -->
+
+   <div id="maletasView" class="card hidden">
+
+  <h2>Maletas</h2>
+
+  <div id="listaTecnicosMaletas"></div>
+
+  <div id="listaMesesMaletas"></div>
+
+  <div id="fotosMaleta"></div>
+
+</div>
+
+<div id="documentacaoView" class="hidden">
+
+  <div class="card">
+
+    <h2>Documentação Técnica</h2>
+<div id="formDocumento">
+
+  <select id="docTecnico">
+    <option value="">
+      Selecione um técnico
+    </option>
+  </select>
+
+  <input
+    id="docTitulo"
+    placeholder="Título do documento"
+  >
+
+  <input
+    id="docDescricao"
+    placeholder="Descrição"
+  >
+
+  <input
+    type="file"
+    id="docArquivo"
+    accept=".pdf"
+  >
+
+  <label>
+  <input
+    type="checkbox"
+    id="docAssinatura"
+  />
+  Requer assinatura do técnico
+</label>
+
+  <button onclick="adicionarDocumento()">
+    Adicionar Documento
+  </button>
+
+</div>
+
+    </div>
+
+    <hr>
+
+    <div id="listaDocumentos"></div>
+
+  </div>
+
+ <div id="adminView" class="card hidden">
+
+  <h2>Administração</h2>
+
+  <p>
+  🟢 Regularizados
+  <span id="countOk">0</span>
+
+  🟡 Problemas
+  <span id="countProblemas">0</span>
+
+  🔴 Pendentes
+  <span id="countPendente">0</span>
+  </p>
+
+  <table id="tabelaTecnicos" border="1" width="100%">
+    <thead>
+      <th>Técnico</th>
+      <th>Status</th>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <button id="btnExportarExcel">
+    Exportar Excel
+  </button>
+
+</div>
+  <div id="regrasView" class="card hidden">
+
+ <h2>Diretrizes do Sistema</h2>
+
+  <ul>
+    <li>Os administradores são responsáveis pelo acompanhamento contínuo do envio dos checklists pelos técnicos de campo, 
+      conforme cronograma estabelecido.</li>
+    <li>Compete aos administradores a verificação, análise e tratativa das ocorrências, 
+      irregularidades ou não conformidades registradas no sistema.</li>
+    <li>É de responsabilidade dos administradores assegurar o correto fechamento mensal das maletas, após validação dos registros realizados.</li>
+    <li>Cabe aos administradores o monitoramento contínuo das pendências e do status operacional dos técnicos no sistema.</li>
+    <li>Os administradores devem garantir a integridade, a segurança e a confidencialidade dos dados registrados no sistema, 
+      adotando as medidas necessárias para proteção das informações.</li>
+  </ul>
+</div>
+<div id="comprasView" class="card hidden"></div>
+<div id="estoqueView" class="card hidden"></div>
+
+<div id="minhasSolicitacoesView"class="hidden">
+  <h2>Minhas Solicitações</h2>
+  <div id="listaMinhasSolicitacoes"></div>
+</div>
+
+<!-- MODAL TÉCNICO -->
+
   <div id="estatisticasView" class="card hidden">
 
   <h2>Estatísticas</h2>
@@ -549,11 +566,10 @@
     <button onclick="baixarGrafico()">Baixar gráfico</button>
 </div>
 </div>
-
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://unpkg.com/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
-<script type="module" src="./script.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script type="module" src="./script.js"></script>
 
 </body>
 </html>
