@@ -294,6 +294,7 @@ async function register() {
     const senha = document.getElementById("regPassword").value;
     const confirmarSenha = document.getElementById("regConfirmPassword").value;
     const perfil = document.getElementById("regRole").value;
+    const unidade = document.getElementById("regUnidade").value;
 
     if (!email.endsWith("@kuhn.com")) {
       alert("Use um e-mail corporativo @kuhn.com");
@@ -304,6 +305,11 @@ async function register() {
       alert("As senhas não coincidem.");
       return;
     }
+
+    if (perfil === "admin" &&!unidade) {
+    alert("Selecione a unidade do administrador.");
+  return;
+}
 
     const cred = await createUserWithEmailAndPassword(auth, email, senha);
 
@@ -330,7 +336,8 @@ async function register() {
       telefone,
       teams,
       perfil,
-      gestorUid
+      gestorUid,
+      unidade
     });
 
     alert("✅ Cadastro realizado!");
@@ -363,6 +370,7 @@ onAuthStateChanged(auth, async user => {
 
     window.usuarioLogadoUID = user.uid;
 
+    btnMenu?.classList.remove("hidden");
     // ✅ ESCONDE LOGIN
     const loginLink = document.getElementById("loginLink");
     if (loginLink) loginLink.style.display = "none";
@@ -375,7 +383,7 @@ onAuthStateChanged(auth, async user => {
     const homeView = document.getElementById("homeView");
     if (homeView) homeView.classList.remove("hidden");
     carregarPerfil(user.uid);
-
+    
         } else {
 
           window.usuarioLogadoUID = null;
@@ -386,6 +394,8 @@ onAuthStateChanged(auth, async user => {
 
           const perfil = document.getElementById("headerPerfil");
           if (perfil) perfil.classList.add("hidden");
+          btnMenu?.classList.add("hidden");
+
 
           if (menuDropdown) {
             menuDropdown.innerHTML = "";
@@ -453,12 +463,28 @@ window.carregarPerfil = async uid => {
     const dados = snap.data();
 
     window.dadosUsuarioAtual = dados;
-
+    montarSidebar( 
+      dados.perfil);
     esconderTudo();
 
     if (headerPerfil) {
-      headerPerfil.textContent = `${dados.perfil} ▾`;
-      headerPerfil.classList.remove("hidden");
+     headerPerfil.innerHTML = `
+        <div class="usuario-box">
+
+          <strong>
+            ${dados.nome}
+          </strong>
+
+          <small>
+            ${
+              dados.unidade
+                ? dados.unidade
+                : dados.perfil
+            }
+          </small>
+
+        </div>
+      `;
     }
 
     montarMenuPorPerfil(dados.perfil);
@@ -611,7 +637,7 @@ function gerarChecklist() {
             </div>
 
            <div class="pergunta-grupo fotos-grupo hidden" id="fotos_${i}">
-            <p>📸 Adicione fotos</p>
+            <p> Adicione fotos</p>
 
             <div class="upload-box">
               <input type="file" id="foto_${i}_1" accept="image/*">
@@ -824,7 +850,7 @@ if (!houveProblema) {
 }
       if (!fotoCaixa) {
 
-        alert("📸 Adicione a foto da maleta organizada!");
+        alert(" Adicione a foto da maleta organizada!");
 
         return;
       }
@@ -1583,7 +1609,7 @@ window.abrirCompras = () => {
 
     <input id="compMotivo" placeholder="Motivo (quebrou, perdeu...)" />
 
-    <button onclick="enviarCompra()">Solicitar</button>
+    <button class="btn-solicitar" onclick="enviarCompra()">Solicitar</button>
 
     <select
   id="compTipo"
@@ -1600,7 +1626,7 @@ window.abrirCompras = () => {
   <div id="blocoEmergencia" class="hidden">
 
   <p>
-    🚨 Descreva a situação emergencial
+   Descreva a situação emergencial
   </p>
 
   <textarea
@@ -1669,6 +1695,19 @@ window.abrirAprovarCompras = async () => {
   esconderTudo();
 
   const container = document.getElementById("adminView");
+  container.innerHTML = `
+  <h2>Aprovação de Compras</h2>
+
+  <p>
+    Gerencie e aprove solicitações de compra.
+  </p>
+
+  <div id="cardsCompras"></div>
+
+  <div id="comprasEmergenciais"></div>
+
+  <div id="comprasNormais"></div>
+`;
   container.classList.remove("hidden");
 
   // ✅ PEGA contador corretamente
@@ -1686,7 +1725,7 @@ window.abrirAprovarCompras = async () => {
     if (t.id !== "tabelaTecnicos") t.remove();
   });
 
-  const table = document.createElement("table");
+  /*const table = document.createElement("table");
 
 table.innerHTML = `
   <thead>
@@ -1707,15 +1746,48 @@ wrapper.appendChild(table);
 container.appendChild(wrapper);
 
   const tbody = document.getElementById("tbodyCompras");
-  console.log(tbody);
+  console.log(tbody);*/
 
   const compras = await getDocs(collection(db, "compras"));
 
+  let totalPendentes = 0;
+  let totalEmergenciais = 0;
+  let totalAprovadas = 0;
+  let totalReprovadas = 0;
+
+  const comprasEmergenciais = [];
+  const comprasNormais = [];
   compras.forEach(docSnap => {
 
     const data = docSnap.data();
     
+    if (data.status === "pendente") {
+      totalPendentes++;
+    }
 
+    if (data.tipo === "emergencial") {
+      totalEmergenciais++;
+    }
+
+    if (data.status === "aprovado") {
+      totalAprovadas++;
+    }
+
+    if (data.status === "reprovado") {
+      totalReprovadas++;
+    }
+    if (data.tipo === "emergencial") {
+      comprasEmergenciais.push({
+        id: docSnap.id,
+        ...data
+      });
+
+    } else {
+      comprasNormais.push({
+        id: docSnap.id,
+        ...data
+      });
+    }
     if (
       String(data.gestorUid).trim() !==
       String(window.usuarioLogadoUID).trim()
@@ -1723,7 +1795,7 @@ container.appendChild(wrapper);
       return;
     }
 
-     const statusTexto = {
+    /* const statusTexto = {
         pendente: "Pendente",
         em_espera: "Em espera",
         aprovado: "Aprovado",
@@ -1746,10 +1818,8 @@ tr.innerHTML = `
       ? `
         <br><br>
 
-        <button
-          onclick="abrirDetalhesEmergencia('${docSnap.id}')"
-        >
-          📄 Ver detalhes
+        <button class="btn-visualizar"onclick="abrirDetalhesEmergencia('${docSnap.id}')">
+          Ver detalhes
         </button>
       `
       : ""
@@ -1850,9 +1920,221 @@ tr.innerHTML = `
          }
         </td>
 `;
-    tbody.appendChild(tr);
+    tbody.appendChild(tr);*/
   });
+
+  document.getElementById("cardsCompras").innerHTML = `
+
+<div class="cards-compras">
+
+<div class="card-indicador pendente">
+
+  <div class="card-topo">
+
+    <span class="card-icone pendente-icon">
+      <i class="fi fi-rr-clock-three"></i>
+    </span>
+
+    <h3>${totalPendentes}</h3>
+
+  </div>
+
+  <span>Pendentes</span>
+
+</div>
+
+<div class="card-indicador emergencia">
+
+  <div class="card-topo">
+
+    <span class="card-icone emergencia-icon">
+      <i class="fi fi-br-diamond-exclamation"></i>
+    </span>
+
+    <h3>${totalEmergenciais}</h3>
+
+  </div>
+
+  <span>Emergenciais</span>
+
+</div>
+
+<div class="card-indicador aprovado">
+
+  <div class="card-topo">
+    <span class="card-icone aprovado-icon">
+      <i class="fi fi-br-check"></i>
+    </span>
+
+    <h3>${totalAprovadas}</h3>
+
+  </div>
+
+  <span>Aprovadas</span>
+
+</div>
+
+<div class="card-indicador reprovado">
+
+<div class="card-topo">
+<span class="card-icone reprovado-icon">
+ <i class="fi fi-br-circle-x"></i>
+ </span>
+
+    <h3>${totalReprovadas}</h3>
+
+  </div>
+
+  <span>Reprovadas</span>
+
+</div>
+
+</div>
+`;
+document.getElementById("comprasEmergenciais").innerHTML = `
+<div class="titulo-emergencial">
+
+    <span>
+      ⚠ COMPRAS EMERGENCIAIS
+    </span>
+
+    <span class="badge-titulo">
+      ${comprasEmergenciais.length} solicitação
+    </span>
+
+</div>
+`;
+
+document.getElementById("comprasNormais").innerHTML = `
+<div class="titulo-normal">
+
+    <span>
+      ✅ COMPRAS NORMAIS
+    </span>
+
+    <span class="badge-titulo">
+      ${comprasNormais.length} solicitação
+    </span>
+
+</div>
+`;
+document.getElementById("comprasEmergenciais").innerHTML +=
+  gerarTabelaCompras(
+    comprasEmergenciais
+  );
+
+document.getElementById("comprasNormais").innerHTML +=
+  gerarTabelaCompras(
+    comprasNormais
+  );
+
 };
+
+function gerarTabelaCompras(lista) {
+
+  let html = `
+    <div class="tabela-wrapper">
+
+      <table>
+
+        <thead>
+          <tr>
+            <th>Técnico</th>
+            <th>Ferramenta</th>
+            <th>Motivo</th>
+            <th>Status</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+
+        <tbody>
+  `;
+
+  lista.forEach(compra => {
+
+    html += `
+      <tr>
+
+        <td>
+          ${compra.tecnicoNome}
+        </td>
+
+        <td>
+          ${compra.ferramenta}
+        </td>
+
+        <td>
+          ${compra.motivo}
+        </td>   
+      <td>
+         <span class="status-badge status-${compra.status}">
+          ${compra.status}
+          </span>
+              </td>
+              <td>
+          ${compra.status === "pendente" ? `
+
+            <button
+              class="btn-aprovar"
+              onclick="abrirAprovacaoComPrazo('${compra.id}')"
+            >
+              Aprovar
+            </button>
+
+            <button
+              class="btn-emespera"
+              onclick="colocarEmEspera('${compra.id}')"
+            >
+              Em Espera
+            </button>
+
+            <button
+              class="btn-reprovar"
+              onclick="reprovarCompra('${compra.id}')"
+            >
+              Reprovar
+            </button>
+
+          ` : ""}
+
+          ${compra.status === "em espera" ? `
+
+            <button class="btn-aprovar"onclick="abrirAprovacaoComPrazo('${compra.id}')">
+              Aprovar
+            </button>
+
+            <button class="btn-editar"onclick="editarComentarioEspera('${compra.id}')">
+              Editar
+            </button>
+
+            <button class="btn-reprovar"onclick="reprovarCompra('${compra.id}')">
+              Reprovar
+            </button>
+
+          ` : ""}
+          ${compra.tipo === "emergencial" ? `
+           <button class="btn-visualizar"onclick="abrirDetalhesEmergencia('${compra.id}')">
+              Detalhes
+          </button>
+
+` : ""}
+
+
+          </td>
+      </tr>
+    `;
+  });
+
+  html += `
+        </tbody>
+
+      </table>
+
+    </div>
+  `;
+
+  return html;
+}
 
 window.editarComentarioEspera = async (id) => {
 
@@ -2000,7 +2282,7 @@ window.abrirSelecaoLocal = (id) => {
         ${locaisRetirada.map(l => `<option>${l}</option>`).join("")}
       </select>
 
-      <button onclick="confirmarAprovacao('${id}')">✅ Confirmar</button>
+      <button onclick="confirmarAprovacao('${id}')"> Confirmar</button>
     </div>
   `;
 
@@ -2011,6 +2293,8 @@ window.toggleGestor = () => {
 
   const perfil = document.getElementById("regRole")?.value;
   const selectGestor = document.getElementById("regGestor");
+  const blocoUnidade =document.getElementById( "blocoUnidade");
+
 
   if (!selectGestor) return;
 
@@ -2019,9 +2303,11 @@ window.toggleGestor = () => {
   if (perfil === "admin") {
     selectGestor.style.display = "none";
     if (label) label.style.display = "none";
+    if (blocoUnidade) {blocoUnidade.style.display = "block";}
   } else {
     selectGestor.style.display = "block";
     if (label) label.style.display = "block";
+    if (blocoUnidade) {blocoUnidade.style.display ="none";}
   }
 };
 
@@ -2186,7 +2472,7 @@ ${
             `
             : ""
         }
-      <button onclick="confirmarAprovacaoComPrazo('${id}')">✅ Confirmar</button>
+      <button onclick="confirmarAprovacaoComPrazo('${id}')">Confirmar</button>
     </div>
   `;
 
@@ -3068,7 +3354,7 @@ async function carregarDocumentos() {
 
         <button
           onclick="abrirDocumento('${docData.arquivoUrl}')">
-          📂 Documento Original
+          Documento Original
         </button>
 
         ${
@@ -3078,7 +3364,7 @@ async function carregarDocumentos() {
             ? `
               <button
                 onclick="abrirUploadAssinado('${docData.id}')">
-                📤 Enviar Assinado
+                Enviar Assinado
               </button>
             `
             : ""
@@ -3090,7 +3376,7 @@ async function carregarDocumentos() {
             ? `
               <button
                 onclick="abrirDocumento('${docData.arquivoAssinadoUrl}')">
-                ✅ Documento Assinado
+                Documento Assinado
               </button>
             `
             : ""
@@ -3131,7 +3417,7 @@ async function carregarDocumentos() {
             ? `
               <button
                 onclick="excluirDocumento('${docData.id}')">
-                🗑 Excluir
+                Excluir
               </button>
             `
             : ""
@@ -3472,14 +3758,15 @@ window.abrirMinhasSolicitacoes =
 
   view.innerHTML = `
 <h2>
-  📦 Estoque de Ferramentas
+  Estoque de Ferramentas
 </h2>
 
 <label>
   Unidade:
 </label>
 
-<select id="estoqueUnidade">
+<select
+  id="estoqueUnidade"onchange="carregarEstoque()">
 
   <option>
     São José dos Pinhais
@@ -3501,119 +3788,118 @@ window.abrirMinhasSolicitacoes =
 
 <br><br>
 
-<button onclick="abrirCadastroEstoque()">
-  ➕ Atualizar Estoque
+<button class="btn-importar" onclick="importarEstoque()">
+  Importar Planilha
 </button>
-
+<button class="btn-visualizar" onclick="visualizarEstoque()">
+  Visualizar Estoque
+</button>
 <div id="listaEstoque">
 </div>
 `;
 };
+window.carregarEstoque = async () => {
 
-  window.abrirCadastroEstoque = () => {
-  let html = `
-  <div class="modal" id="modalEstoque">
-    <div
-      class="modal-content"
-      style="
-        max-height:80vh;
-        overflow-y:auto;
-        width:700px;
-        max-width:90%;
-      "
-    >
-    <span
-  onclick="document.getElementById('modalEstoque')?.remove()"
-  style="
-    position:absolute;
-    top:10px;
-    right:15px;
-    cursor:pointer;
-    color:#952020;
-    font-size:15px
-    font-weight:bold;
-  "
->
-  ✖
-</span>
-      <h3>Atualizar Estoque</h3>
-      `; 
-  Object.entries(ferramentas).forEach(([grupo, lista]) => {
-    html +=` 
-    <details> 
+  const unidade =
+    document.getElementById(
+      "estoqueUnidade"
+    ).value;
 
-    <summary>${grupo}</summary>
-    `; 
-    lista.forEach(f=> { 
-      html += `
-     <div
-  style="
-    margin-bottom:15px;
-    padding:8px;
-    border-bottom:1px solid #ddd;
-  "
->
-
-  <strong>${f}</strong>
-
-  <br>
-
-      <input
-        type="number"
-        min="0"
-        value="0"
-        data-ferramenta="${f}"
-      />
-      </div>
-      `;
-    }); 
-
-    html +=` </details>
-    `;
-  }
-); 
-  html += `
-      <button onclick="salvarEstoque()">
-        Salvar Estoque
-      </button>
-    </div>
-  </div>
-  `;
-  document.body.insertAdjacentHTML("beforeend", html);
-}
-
-window.salvarEstoque = () => {
-
-  const inputs =
-    document.querySelectorAll(
-      "#modalEstoque input[data-ferramenta]"
+  const snap =
+    await getDoc(
+      doc(
+        db,
+        "estoque",
+        unidade
+      )
     );
 
-  const estoque = {};
+  if (!snap.exists()) {
 
-  inputs.forEach(input => {
+    console.log(
+      "Estoque não encontrado."
+    );
 
-    const ferramenta =
-      input.dataset.ferramenta;
+    return;
+  }
 
-    const quantidade =
-      Number(input.value);
+  const estoque =
+    snap.data();
 
-    if (quantidade > 0) {
+  console.log(
+    estoque
+  );
+let html = "";
+Object.entries(estoque).forEach(
+  ([categoria, ferramentas]) => {
 
-      estoque[ferramenta] =
-        quantidade;
+    html += `
+      <details>
 
-    }
+        <summary>
+          ${categoria}
+        </summary>
+    `;
+      Object.entries(
+      ferramentas
+    ).forEach(
+      ([ferramenta, quantidade]) => {
 
-  });
+        html += `
+          <div
+            style="
+              margin-bottom:15px;
+              padding:8px;
+              border-bottom:1px solid #ddd;
+            "
+          >
 
-  console.log(estoque);
+            <strong>
+              ${ferramenta}
+            </strong>
 
+            <br><br>
+
+            Quantidade em estoque:
+
+            <strong>
+              ${quantidade}
+            </strong>
+
+          </div>
+        `;
+
+      }
+    );
+        html += `
+      </details>
+    `;
+  }
+);
+return html;
 };
 
 window.importarEstoque = () => {
 
+
+  const unidadeSelecionada =
+  document.getElementById(
+    "estoqueUnidade"
+  ).value;
+
+const unidadeGestor =
+  window.dadosUsuarioAtual?.unidade;
+
+if (
+  unidadeSelecionada !== unidadeGestor
+) {
+
+  alert(
+    `Você só pode importar estoque da unidade ${unidadeGestor}.`
+  );
+
+  return;
+}
   const input =
     document.createElement("input");
 
@@ -3651,9 +3937,122 @@ window.importarEstoque = () => {
 
       const json =
         XLSX.utils.sheet_to_json(sheet);
+        window.estoqueImportado = json;
 
       console.log(json);
+      let html = "";
 
+const colunas =
+  Object.keys(json[0]);
+
+for (
+  let i = 0;
+  i < colunas.length;
+  i += 2
+) {
+
+  const categoria =
+    colunas[i];
+
+  const quantidadeColuna =
+    colunas[i + 1];
+
+  html += `
+    <h3>${categoria}</h3>
+
+    <table border="1">
+
+      <tr>
+        <th>Ferramenta</th>
+        <th>Quantidade</th>
+      </tr>
+  `;
+
+  json.forEach(item => {
+
+    if (item[categoria]) {
+
+      html += `
+        <tr>
+
+          <td>
+            ${item[categoria]}
+          </td>
+
+          <td>
+            ${
+              item[
+                quantidadeColuna
+              ] ?? 0
+            }
+          </td>
+
+        </tr>
+      `;
+    }
+
+  });
+
+  html += `
+    </table><br>
+  `;
+
+}
+
+const modal =
+  document.createElement("div");
+
+modal.id =
+  "modalImportacaoEstoque";
+
+modal.className =
+  "modal";
+
+  modal.innerHTML = `
+
+  <div
+    class="modal-content"
+    style="
+      position:relative;
+      max-height:80vh;
+      overflow-y:auto;
+      width:900px;
+      max-width:90%;
+    "
+  >
+
+    <span
+      onclick="document.getElementById('modalImportacaoEstoque')?.remove()"
+      style="
+        position:absolute;
+        top:10px;
+        right:15px;
+        cursor:pointer;
+        color:#952020;
+        font-size:18px;
+        font-weight:bold;
+      "
+    >
+      ✖
+    </span>
+
+    <h2>
+      📄 Pré-visualização do Estoque
+    </h2>
+
+    ${html}
+
+    <br>
+
+    <button class="btn-confirmarImportacao"onclick="confirmarImportacao()"
+    >
+       Confirmar Importação
+    </button>
+
+  </div>
+
+`;
+document.body.appendChild(modal);
     };
 
     reader.readAsArrayBuffer(file);
@@ -3662,4 +4061,501 @@ window.importarEstoque = () => {
 
   input.click();
 
+  document
+  .getElementById(
+    "modalImportacaoEstoque"
+  )
+  ?.remove();
+
+
 };
+window.confirmarImportacao = () => {
+
+  const estoque = {};
+
+  const json =
+    window.estoqueImportado;
+
+  const colunas =
+    Object.keys(json[0]);
+
+  for (
+    let i = 0;
+    i < colunas.length;
+    i += 2
+  ) {
+
+    const categoria =
+      colunas[i];
+
+    const colunaQuantidade =
+      colunas[i + 1];
+
+    estoque[categoria] = {};
+
+    json.forEach(item => {
+
+      const ferramenta =
+        item[categoria];
+
+      const quantidade =
+        item[colunaQuantidade];
+
+      if (ferramenta) {
+
+        estoque[categoria][ferramenta] =
+          quantidade || 0;
+
+      }
+
+    });
+
+  }
+
+  console.log(estoque);
+  const unidade =
+  document.getElementById(
+    "estoqueUnidade"
+  ).value;
+
+  console.log(
+  "Unidade:",
+  unidade
+);
+
+estoque.ultimaAtualizacao =
+  new Date();
+
+setDoc(
+  doc(
+    db,
+    "estoque",
+    unidade
+  ),
+  estoque
+);
+alert(
+  "✅ Estoque salvo com sucesso!"
+);
+document
+  .getElementById(
+    "modalImportacaoEstoque"
+  )
+  ?.remove();
+};
+
+window.visualizarEstoque = async () => {
+
+  const unidade =
+    document.getElementById(
+      "estoqueUnidade"
+    ).value;
+
+  const snap =
+    await getDoc(
+      doc(
+        db,
+        "estoque",
+        unidade
+      )
+    );
+
+if (!snap.exists()) {
+
+  alert(
+    "📦 Esta unidade ainda não possui estoque cadastrado.\n\nImporte uma planilha para iniciar o controle de estoque."
+  );
+
+  return;
+}
+
+  const estoque =
+    snap.data();
+  const ultimaAtualizacao =
+  estoque.ultimaAtualizacao;
+  let html = "";
+
+Object.entries(estoque)
+  .filter(
+    ([categoria]) =>
+      categoria !==
+      "ultimaAtualizacao"
+  )
+  .sort((a, b) =>
+    a[0].localeCompare(
+      b[0],
+      "pt-BR"
+    )
+  )
+  .forEach(
+    ([categoria, ferramentas]) => {
+
+      html += `
+
+        <details>
+
+          <summary>
+            ${categoria}
+          </summary>
+
+      `;
+
+      Object.entries(
+        ferramentas
+      ).forEach(
+        ([ferramenta, quantidade]) => {
+
+          html += `
+
+            <div
+              style="
+                margin-bottom:15px;
+                padding:8px;
+                border-bottom:1px solid #ddd;
+              "
+            >
+
+              <strong>
+                ${ferramenta}
+              </strong>
+
+              <br><br>
+
+              Quantidade em estoque:
+
+              <strong>
+                ${quantidade}
+              </strong>
+
+            </div>
+
+          `;
+
+        }
+      );
+
+      html += `
+        </details>
+      `;
+
+    }
+  );
+
+  const modal =
+    document.createElement("div");
+
+  modal.id =
+    "modalVisualizarEstoque";
+
+  modal.className =
+    "modal";
+
+  modal.innerHTML = `
+
+    <div
+      class="modal-content"
+      style="
+        position:relative;
+        max-height:80vh;
+        overflow-y:auto;
+        width:700px;
+        max-width:90%;
+      "
+    >
+
+      <span
+        onclick="document.getElementById('modalVisualizarEstoque')?.remove()"
+        style="
+          position:absolute;
+          top:10px;
+          right:15px;
+          cursor:pointer;
+          color:#952020;
+          font-size:18px;
+          font-weight:bold;
+        "
+      >
+        ✖
+      </span>
+
+      <h2>
+        📦 Estoque - ${unidade}
+      </h2>
+      <p
+  style="
+    color:#666;
+    font-size:14px;
+  "
+>
+
+  🕒 Última atualização:
+
+  ${
+    ultimaAtualizacao
+      ? ultimaAtualizacao
+          .toDate()
+          .toLocaleString("pt-BR")
+      : "Não informado"
+  }
+
+</p>
+      ${html}
+
+    </div>
+
+  `;
+
+  document.body.appendChild(
+    modal
+  );
+
+};
+
+const btnMenu =
+  document.getElementById("btnMenu");
+
+const sidebar =
+  document.getElementById("sidebar");
+
+const app =
+  document.getElementById("app");
+
+btnMenu.addEventListener(
+  "click",
+  () => {
+
+    sidebar.classList.toggle(
+      "open"
+    );
+
+    app.classList.toggle(
+      "sidebar-open"
+    );
+
+  }
+);
+
+const menuCompras =
+  document.getElementById(
+    "menuCompras"
+  );
+
+const submenuCompras =
+  document.getElementById(
+    "submenuCompras"
+  );
+
+menuCompras.addEventListener(
+  "click",
+  () => {
+
+    submenuCompras.classList.toggle(
+      "hidden"
+    );
+
+  }
+);
+function montarSidebar(perfil) {
+
+  const menu =
+    document.getElementById(
+      "sidebarMenu"
+    );
+
+  if (!menu) return;
+
+  menu.innerHTML = ""; 
+    if (perfil === "tecnico") {
+
+  menu.innerHTML = `
+
+    <li>
+      <div
+        class="menu-item"
+        onclick="abrirChecklist()"
+      >
+        Checklist
+      </div>
+    </li>
+
+    <li>
+      <div
+        class="menu-item"
+        onclick="abrirRegras()"
+      >
+        Regras
+      </div>
+    </li>
+
+    <li>
+      <div
+        class="menu-item"
+        onclick="abrirDocumentacao()"
+      >
+        Documentação
+      </div>
+      <li>
+
+  <div
+    id="menuCompras"
+    class="menu-principal"
+  >
+    Compras
+  </div>
+
+  <ul
+    id="submenuCompras"
+    class="submenu hidden"
+  >
+
+    <li onclick="abrirCompras()">
+      Solicitar Compra
+    </li>
+
+    <li onclick="abrirMinhasSolicitacoes()">
+      Minhas Solicitações
+    </li>
+
+  </ul>
+    </li>
+
+  `;
+}
+const menuCompras =
+  document.getElementById(
+    "menuCompras"
+  );
+
+const submenuCompras =
+  document.getElementById(
+    "submenuCompras"
+  );
+
+if (
+  menuCompras &&
+  submenuCompras
+) {
+
+  menuCompras.addEventListener(
+    "click",
+    () => {
+
+      submenuCompras.classList.toggle(
+        "hidden"
+      );
+
+    }
+  );
+
+}
+if (perfil === "admin") {
+
+  menu.innerHTML = `
+
+    <li>
+      <div
+        class="menu-item"
+        onclick="abrirAdmin()"
+      >
+        Análise de Técnicos
+      </div>
+    </li>
+
+    <li>
+      <div
+        class="menu-item"
+        onclick="abrirRegras()"
+      >
+        Regras
+      </div>
+    </li>
+
+    <li>
+      <div
+        class="menu-item"
+        onclick="abrirMaletas()"
+      >
+        Maletas
+      </div>
+    </li>
+
+    <li>
+  <div
+    class="menu-item"
+    onclick="abrirEstatisticas()"
+  >
+    Estatísticas
+  </div>
+</li>
+
+<li>
+  <div
+    class="menu-item"
+    onclick="abrirDocumentacao()"
+  >
+    Documentação
+  </div>
+</li>
+<li>
+
+  <div
+    id="menuCompras"
+    class="menu-principal"
+  >
+    Compras
+  </div>
+
+  <ul
+    id="submenuCompras"
+    class="submenu hidden"
+  >
+
+    <li onclick="abrirAprovarCompras()">
+      Solicitações de Compras
+    </li>
+
+    <li>
+      Notas Fiscais
+    </li>
+
+    <li>
+      Ferramentas por Técnico
+    </li>
+
+    <li>
+      Desligamento
+    </li>
+
+  </ul>
+
+</li>
+  `;
+const menuCompras =
+  document.getElementById(
+    "menuCompras"
+  );
+
+const submenuCompras =
+  document.getElementById(
+    "submenuCompras"
+  );
+
+if (
+  menuCompras &&
+  submenuCompras
+) {
+
+  menuCompras.addEventListener(
+    "click",
+    () => {
+
+      submenuCompras.classList.toggle(
+        "hidden"
+      );
+
+    }
+  );
+
+}
+}
+}
