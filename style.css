@@ -61,7 +61,7 @@ input, select, button {
   width: 12,5%;
 }
 button {
-  background: #3373fb;
+  background: #2563eb;
   color: #ffffff;
   border: none;
   cursor: pointer;
@@ -82,17 +82,12 @@ button:hover {
   width: 100%;
 }
 
-/* área interna */
-.header-inner {
-  max-width: 1200px;
-  margin: auto;
-  padding: 8px 25px; /* ✅ menor */
+.topbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  flex-wrap: nowrap;
-
-  padding: 10px 15px;
+  padding: 12px 20px;
+  box-sizing: border-box;
 }
 
 /* logo + título */
@@ -107,24 +102,71 @@ button:hover {
 }
 
 .header-title {
-  font-size: 22px;
+  font-size: 28px;
   font-weight: 700;
 }
 
-/* lado direito */
-.header-right {
+.notificacao-wrapper {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: center;
+}
+
+.sino {
+  font-size: 22px;
+  color: white;
+  cursor: pointer;
+}
+
+.badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #ff3b30;
+  color: white;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 /* perfil */
 .header-perfil {
-  font-weight: bold;
+  display: flex;
+  align-items: flex-start;
+  margin-left: 4px;
+  color: white;
   cursor: pointer;
-  padding: 6px 10px;
-  border-radius: 6px;
-  transition: background 0.2s;
+}
+
+.usuario-box {
+  transform: translateY(2px);
+  display: flex;
+  flex-direction: column;
+  text-align: right;
+  line-height: 1.1;
+  padding-top: 2px;
+}
+
+
+.usuario-box strong {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.usuario-box small {
+  font-size: 12px;
+  opacity: .85;
 }
 
 .header-perfil:hover {
@@ -146,6 +188,65 @@ button:hover {
   background: rgba(255,255,255,0.15);
 }
 
+.sidebar {
+  position: fixed;
+  top: 92px !important; 
+  height: calc(100vh - 92px);
+  left: 0;
+  width: 0;
+  overflow: hidden;
+  background: #1c1f33;
+  color: white;
+  transition: .3s ease;
+  z-index: 999;
+}
+
+#app {
+  margin-left:20px;
+  margin-right: 20px;
+  transition: margin-left .3s ease;
+}
+
+#app.sidebar-open {
+  margin-left: 300px;
+}
+
+.sidebar.open {
+  width: 240px;
+  padding: 20px;
+}
+
+.sidebar h3 {
+  margin-bottom: 20px;
+}
+
+.sidebar ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.menu-item,
+.menu-principal {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.menu-item:hover,
+.menu-principal:hover {
+  background: #c21c1c;
+}
+
+.submenu {
+  margin-left: 15px;
+  margin-top: 8px;
+}
+
+.hidden {
+  display: none !important;
+}
 /* ===== MENUS ===== */
 
 .perfil-wrapper,
@@ -175,8 +276,9 @@ button:hover {
 }
 
 .perfil-menu {
-  left: 50%;
-  transform: translateX(-50%);
+  right: 0;
+  left: auto;
+  transform: none;
 }
 
 .perfil-menu button,
@@ -554,8 +656,8 @@ tbody tr:nth-child(even) {
 
 @media (min-width: 768px) {
   .header-inner {
-    max-width: 1200px;
-    margin: auto;
+  width: 100%;
+  box-sizing: border-box;
   }
 }
 
@@ -875,4 +977,254 @@ button:hover {
 
 .btn-nota:hover {
   background: #21396c;
+}
+.btn-solicitar,
+.btn-confirmarImportacao,
+.btn-importar {
+  background: #1493ac;
+}
+.btn-solicitar:hover,
+.btn-confirmarImportacao:hover,
+.btn-importar:hover {
+  background: #1a8094;
+}
+
+.btn-visualizar {
+  background: #0867c0;
+}
+
+.btn-visualizar:hover {
+  background: #074988;
+}
+
+
+.submenu {
+  margin-left: 35px;
+  margin-top: 6px;
+}
+
+.submenu li {
+  list-style: none;
+  color: white;
+  padding: 3px 0 4px 35px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.submenu li:hover {
+  color: #ffcccc;
+}
+
+.submenu li::before {
+  content: "↳";
+  display: inline-block;
+  margin-right: 1px;
+  color: #aab1c5;
+}
+
+.cards-compras{
+  display:grid;
+  grid-template-columns:
+    repeat(4, 1fr);
+  gap:10px;
+}
+
+.card-topo{
+  display:flex;
+  align-items:center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.card-icone{
+  width:28px;
+  height:28px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:15px;
+  font-size: 20px;
+}
+
+.card-indicador > span{
+  font-size:13px;
+  color:#64748b;
+  font-weight:500;
+}
+
+.pendente .card-icone{
+  background:#fff7e6;
+}
+
+.emergencia .card-icone{
+  background:#feecec;
+}
+
+.aprovado .card-icone{
+  background:#eafbf0;
+}
+
+.reprovado .card-icone{
+  background:#f2f4f7;
+}
+
+.pendente{
+  border-left:4px solid #f59e0b;
+}
+
+.emergencia{
+  border-left:4px solid #ef4444;
+}
+
+.aprovado{
+  border-left:4px solid #22c55e;
+}
+
+.reprovado{
+  border-left:4px solid #9ca3af;
+}
+
+.card-indicador{
+  background:white;
+  border-radius:12px;
+  padding:10px;
+  flex:1;
+  min-width:180px;
+  box-shadow:0 2px 6px rgba(0,0,0,.08);
+}
+
+.card-indicador h3{
+  margin:0;
+  font-size:26px;
+}
+
+.titulo-emergencial{
+  background:#fff1f2;
+  color:#dc2626;
+  padding:15px;
+  font-weight:700;
+  border-radius:12px 12px 0 0;
+  margin-top:20px;
+}
+
+.titulo-normal{
+  background:#f0fdf4;
+  color:#16a34a;
+  padding:15px;
+  font-weight:700;
+  border-radius:12px 12px 0 0;
+  margin-top:20px;
+}
+
+.titulo-emergencial,
+.titulo-normal{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+.badge-titulo{
+  background:white;
+  padding:4px 10px;
+  border-radius:20px;
+  font-size:12px;
+  font-weight:600;
+}
+
+table {
+  width:100%;
+  border-collapse:collapse;
+  background:white;
+}
+
+thead {
+  background:#f8fafc;
+}
+
+th {
+  font-size:12px;
+  text-transform:uppercase;
+  color:#64748b;
+}
+
+td,
+th {
+  padding:15px;
+  border-bottom:1px solid #e5e7eb;
+}
+
+.status-badge{
+  display:inline-flex;
+  align-items:center;
+  padding:6px 12px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:600;
+}
+
+.status-pendente{
+  background:#fff8e6;
+  color:#f59e0b;
+}
+
+.status-aprovado{
+  background:#ecfdf5;
+  color:#16a34a;
+}
+
+.status-reprovado{
+  background:#fef2f2;
+  color:#dc2626;
+}
+
+.card-indicador h3{
+    margin:0;
+    line-height:1;
+}
+
+.card-indicador span{
+    display:block;
+    margin-top:4px;
+}
+
+.card-icone i{
+  position:relative;
+  top:4px;
+  left:4px;
+}
+
+.pendente-icon{
+  color:#f59e0b;
+}
+
+.emergencia-icon{
+  color:#ef4444;
+}
+
+.aprovado-icon{
+  color:#22c55e;
+}
+
+.reprovado-icon{
+  color:#64748b;
+}
+
+.emergencia{
+  border-left:4px solid #ef4444;
+}
+
+.emergencia h3{
+  color:#d52323;
+}
+
+.pendente h3{
+  color:#d78f11;
+}
+
+.aprovado h3{ 
+  color: #187c4f
+}
+
+.reprovado h3{
+  color: #403f3f
 }
