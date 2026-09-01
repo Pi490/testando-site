@@ -4335,26 +4335,7 @@ btnMenu.addEventListener(
   }
 );
 
-const menuCompras =
-  document.getElementById(
-    "menuCompras"
-  );
 
-const submenuCompras =
-  document.getElementById(
-    "submenuCompras"
-  );
-
-menuCompras.addEventListener(
-  "click",
-  () => {
-
-    submenuCompras.classList.toggle(
-      "hidden"
-    );
-
-  }
-);
 function montarSidebar(perfil) {
 
   const menu =
@@ -4420,33 +4401,6 @@ function montarSidebar(perfil) {
     </li>
 
   `;
-}
-const menuCompras =
-  document.getElementById(
-    "menuCompras"
-  );
-
-const submenuCompras =
-  document.getElementById(
-    "submenuCompras"
-  );
-
-if (
-  menuCompras &&
-  submenuCompras
-) {
-
-  menuCompras.addEventListener(
-    "click",
-    () => {
-
-      submenuCompras.classList.toggle(
-        "hidden"
-      );
-
-    }
-  );
-
 }
 if (perfil === "admin") {
 
@@ -4526,8 +4480,20 @@ if (perfil === "admin") {
       Desligamento
     </li>
 
+    <li> 
+      Relatório Patrimonial
+    </li>
+
   </ul>
 
+</li>
+<li>
+  <div
+    class="menu-item"
+    onclick="abrirEstoque()"
+  >
+    Estoque
+  </div>
 </li>
   `;
 const menuCompras =
