@@ -16,8 +16,13 @@ body {
   max-width: 900px;
   margin: 20px auto;
   padding: 0 10px;
+  transition: margin-left.3s ease;
 }
 
+#app.sidebar-open{
+  margin-left: 300px;
+  margin-right: 20px;
+}
 /* ===== CARDS ===== */
 
 .card {
@@ -80,6 +85,9 @@ button:hover {
   color: white;
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
   width: 100%;
+  position: sticky;
+  top: 0;
+  z-index:1000;
 }
 
 .topbar {
@@ -190,7 +198,7 @@ button:hover {
 
 .sidebar {
   position: fixed;
-  top: 92px !important; 
+  top: var(--header-height);
   height: calc(100vh - 92px);
   left: 0;
   width: 0;
@@ -199,16 +207,6 @@ button:hover {
   color: white;
   transition: .3s ease;
   z-index: 999;
-}
-
-#app {
-  margin-left:20px;
-  margin-right: 20px;
-  transition: margin-left .3s ease;
-}
-
-#app.sidebar-open {
-  margin-left: 300px;
 }
 
 .sidebar.open {
